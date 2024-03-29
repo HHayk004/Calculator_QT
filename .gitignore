@@ -21,3 +21,5 @@ lib/
 # Generated documentation
 doc/
 Doxyfile
+
+build/
