@@ -9,11 +9,12 @@ MainWindow::MainWindow(QWidget *parent)
     //, ui(new Ui::MainWindow)
 {
     //ui->setupUi(this);
-    this->setGeometry(0, 0, 500, 375);
+    this->setGeometry(100, 200, 500, 375);
     this->setMinimumWidth(500);
     this->setMinimumHeight(375);
 
-    m_display->setStyleSheet("background-color: white");
+    m_display->setStyleSheet("color: white;" "font-size: 35px;");
+    m_display->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
 
     std::vector<std::vector<QString>> symbols = {
         {"(", ")", "%", "CE"},
@@ -31,6 +32,42 @@ MainWindow::MainWindow(QWidget *parent)
             m_buttons[i][j]->setText(symbols[i][j]);
         }
     }
+
+    for (int i = 0; i < 3; ++i) // for 1->9
+    {
+        for (int j = 0; j < 3; ++j)
+        {
+            connect(m_buttons[i + 1][j], &QPushButton::clicked, [i, j, this]()
+            {
+                m_display->setText(m_display->text() + m_buttons[i + 1][j]->text());
+            });
+        }
+    }
+
+    connect(m_buttons[4][0], &QPushButton::clicked, [this]() // for 0
+    {
+        if (!m_display->text().isEmpty())
+        {
+            m_display->setText(m_display->text() + m_buttons[4][0]->text());
+        }
+    });
+
+    connect(m_buttons[4][1], &QPushButton::clicked, [this]() // for .
+    {
+        if (lastIsOperator()) // lastIsOperator classi mej avelacra u implemtacian
+                              // stuguma verjiny operatora mutqagre te che
+        {
+            m_display->setText(m_display->text() + "0.");
+        }
+
+        if (checkNum()) // CheckNum classi mej avelacra u implementacian
+                        // stuguma toxi tvi mej ket ka te che;
+        {
+            m_display->setText(m_display->text() + ".");
+        }
+    });
+
+    // connectnery mnatsats functionneri
 }
 
 double MainWindow::percent(int val, double p) const
