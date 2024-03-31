@@ -25,13 +25,23 @@ private slots:
 
 private:
     //Ui::MainWindow *ui;
-    std::vector<std::string> expr; // sta mej pti tvern u operatornery miajamanak arandzin avelanan
+    std::vector<QString> m_expr; // sta mej pti tvern u operatornery miajamanak arandzin avelanan
+    int m_expr_index;
+
     std::vector<std::vector<QPushButton*>> m_buttons;
+
     QLabel* m_display;
+    int m_display_index;
 
 private:
     double percent(int val, double p) const;
 
+    void addText(const QString& str);
+
+    bool isOperator(const QString& str);
+    bool lastIsOperator();
+    bool lastIsNumber();
+    bool checkPoint();
     // stugumneri functianeri ngaragrutyuny stex es avelacnelu
 };
 #endif // MAINWINDOW_H

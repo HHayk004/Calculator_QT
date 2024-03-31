@@ -1,15 +1,13 @@
-#include "calc.h"
-
-void ExprSolver::exprSolver(std::vector<std::string>& expr)
+void ExprSolver::exprSolver(std::vector<QString>& expr)
 {
     while (expr.size() != 1)
     {
-        std::vector<std::string>::iterator it = firstOperatorIndex(expr);
+        std::vector<QString>::iterator it = firstOperatorIndex(expr);
         makeCalc(expr, it);
     }
 }
 
-void ExprSolver::makeCalc(std::vector<std::string>& expr, std::vector<std::string>::iterator it)
+void ExprSolver::makeCalc(std::vector<QString>& expr, std::vector<QString>::iterator it)
 {
     if (*it == "(")
     {
@@ -27,11 +25,11 @@ void ExprSolver::makeCalc(std::vector<std::string>& expr, std::vector<std::strin
 
     else
     {
-        double num1 = stod(*(it - 1));
-        double num2 = stod(*(it + 1));
+        double num1 = stod((it - 1)->toStdString());
+        double num2 = stod((it + 1)->toStdString());
         
         double result = 0;
-        switch ((*it)[0])
+        switch ((*it)[0].unicode())
         {
             case '+':
                 result = num1 + num2;
@@ -60,12 +58,12 @@ void ExprSolver::makeCalc(std::vector<std::string>& expr, std::vector<std::strin
                 break;
         }
 
-        *(it - 1) = std::to_string(result);
+        *(it - 1) = QString::fromStdString(std::to_string(result));
         expr.erase(it, it + 2);
     }
 }
 
-std::vector<std::string>::iterator ExprSolver::firstOperatorIndex(std::vector<std::string>& expr)
+std::vector<QString>::iterator ExprSolver::firstOperatorIndex(std::vector<QString>& expr)
 {
     auto max_op = expr.end();
     for (auto it = expr.begin(); it != expr.end(); ++it)
@@ -85,7 +83,7 @@ std::vector<std::string>::iterator ExprSolver::firstOperatorIndex(std::vector<st
     return max_op;
 }
 
-bool ExprSolver::isOperator(const std::string& op) const
+bool ExprSolver::isOperator(const QString& op) const
 {
     if (m_op_presedence.find(op) == m_op_presedence.end())
     {

@@ -1,11 +1,15 @@
 #include "mainwindow.h"
+#include "calc.h"
 //#include "./ui_mainwindow.h"
-#include <iostream>
+
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
+    , m_expr()
+    , m_expr_index(0)
     , m_buttons(5, std::vector<QPushButton*>(4))
     , m_display(new QLabel("", this))
+    , m_display_index(0)
     //, ui(new Ui::MainWindow)
 {
     //ui->setupUi(this);
@@ -19,7 +23,7 @@ MainWindow::MainWindow(QWidget *parent)
     std::vector<std::vector<QString>> symbols = {
         {"(", ")", "%", "CE"},
         {"7", "8", "9", "/"},
-        {"4", "5", "6", "x"},
+        {"4", "5", "6", "*"},
         {"1", "2", "3", "-"},
         {"0", ".", "=", "+"}
     };
@@ -33,37 +37,136 @@ MainWindow::MainWindow(QWidget *parent)
         }
     }
 
+    m_buttons[4][2]->setStyleSheet("background-color: darkBlue;");
+
     for (int i = 0; i < 3; ++i) // for 1->9
     {
         for (int j = 0; j < 3; ++j)
         {
+            m_buttons[i + 1][j]->setStyleSheet("background-color: dimGrey;");
             connect(m_buttons[i + 1][j], &QPushButton::clicked, [i, j, this]()
             {
-                m_display->setText(m_display->text() + m_buttons[i + 1][j]->text());
+                if(m_expr.empty() || m_expr[m_expr_index - 1] != ")")
+                {
+                    addText(m_buttons[i + 1][j]->text());
+                }
             });
         }
     }
 
+    m_buttons[4][0]->setStyleSheet("background-color: dimGrey;");
     connect(m_buttons[4][0], &QPushButton::clicked, [this]() // for 0
     {
-        if (!m_display->text().isEmpty())
+        if (lastIsNumber())
         {
-            m_display->setText(m_display->text() + m_buttons[4][0]->text());
+            addText("0");
         }
     });
 
+    m_buttons[4][1]->setStyleSheet("background-color: dimGrey;");
     connect(m_buttons[4][1], &QPushButton::clicked, [this]() // for .
     {
-        if (lastIsOperator()) // lastIsOperator classi mej avelacra u implemtacian
-                              // stuguma verjiny operatora mutqagre te che
+        if (m_expr.empty() || lastIsOperator()) // lastIsOperator classi mej avelacra u implemtacian
+                // stuguma verjiny operatora mutqagre te che
         {
-            m_display->setText(m_display->text() + "0.");
+            addText("0.");
         }
 
-        if (checkNum()) // CheckNum classi mej avelacra u implementacian
+        else if (lastIsNumber() && checkPoint()) // CheckNum classi mej avelacra u implementacian
                         // stuguma toxi tvi mej ket ka te che;
         {
-            m_display->setText(m_display->text() + ".");
+            addText(".");
+        }
+    });
+
+    for (int i = 0; i < 4; ++i) // +, -, *, /
+    {
+        connect(m_buttons[i + 1][3], &QPushButton::clicked, [i, this]()
+        {
+            if ((m_buttons[i + 1][3]->text() == "-" && m_expr.empty() || m_expr[m_expr_index - 1] == "(") ||
+                (lastIsNumber() && m_display->text()[m_display_index - 1] != '.') || m_expr[m_expr_index - 1] == ")")
+            {
+                addText(m_buttons[i + 1][3]->text());
+            }
+        });
+    }
+
+    connect(m_buttons[0][0], &QPushButton::clicked, [this] { // for (
+        if (m_expr.empty() || lastIsOperator())
+        {
+            addText("()");
+        }
+    });
+
+    connect(m_buttons[0][1], &QPushButton::clicked, [this] { // for )
+        if ((lastIsNumber() || m_expr[m_expr_index - 1] == ")") && m_expr[m_expr_index] == ")")
+        {
+            addText("");
+        }
+    });
+
+    connect(m_buttons[0][2], &QPushButton::clicked, [this] { // for %
+        if (lastIsNumber())
+        {
+            addText("%*");
+        }
+    });
+
+    connect(m_buttons[0][3], &QPushButton::clicked, [this] { // for CE
+        QString str = m_display->text();
+        if (!str.isEmpty())
+        {
+            if (m_expr[m_expr_index - 1] == ")")
+            {
+                --m_display_index;
+                --m_expr_index;
+            }
+
+            if (str[m_display_index - 1] == '*' && str[m_display_index - 2] == '%')
+            {
+                m_expr_index -= 3;
+                for (int i = 0; i < 3; ++i)
+                {
+                    m_expr.pop_back();
+                }
+
+                m_display_index -= 2;
+            }
+
+            else if (lastIsNumber() || lastIsOperator())
+            {
+                str.remove(m_display_index - 1, 1);
+                --m_display_index;
+                m_expr[m_expr_index - 1].chop(1);
+                if (m_expr[m_expr_index - 1].isEmpty())
+                {
+                    m_expr.pop_back();
+                    --m_expr_index;
+                }
+            }
+
+            else if (m_expr[m_expr_index - 1] == "(")
+            {
+                m_expr_index -= 1;
+                m_display_index -= 1;
+                m_expr.pop_back();
+                m_expr.pop_back();
+                str.remove(m_display_index, 2);
+            }
+
+            m_display->setText(str);
+        }
+    });
+
+    connect(m_buttons[4][2], &QPushButton::clicked, [this] {
+        if (m_expr.size() > 1)
+        {
+            ExprSolver().exprSolver(m_expr);
+
+            m_expr_index = 1;
+            m_display_index = m_expr[0].size();
+
+            m_display->setText(m_expr[0]);
         }
     });
 
@@ -98,4 +201,108 @@ void MainWindow::resizeEvent(QResizeEvent* event)
 MainWindow::~MainWindow()
 {
     //delete ui;
+}
+
+void MainWindow::addText(const QString& str)
+{
+    if (str.isEmpty())
+    {
+        ++m_display_index;
+        ++m_expr_index;
+        return;
+    }
+
+    QString tmp = m_display->text();
+    for (QChar ch : str)
+    {
+        tmp.insert(m_display_index, ch);
+        ++m_display_index;
+    }
+
+    if ('0' <= str[0] && str[0] <= '9')
+    {
+        if ((m_expr.empty() || (lastIsOperator() || m_expr[m_expr_index - 1] == "(") &&
+            !(m_expr[m_expr_index - 1] == "-" && (m_expr.size() == 1 || m_expr[m_expr_index - 2] == "("))))
+        {
+            m_expr.insert(m_expr.begin() + m_expr_index, str);
+            ++m_expr_index;
+        }
+
+        else
+        {
+            m_expr[m_expr_index - 1] += str;
+        }
+    }
+
+    else if (str == '.')
+    {
+        m_expr[m_expr_index - 1] += str;
+    }
+
+    else if (isOperator(str))
+    {
+        m_expr.insert(m_expr.begin() + m_expr_index, str);
+        ++m_expr_index;
+    }
+
+    else if (str == "%*")
+    {
+        m_expr.insert(m_expr.begin() + m_expr_index, "/");
+        ++m_expr_index;
+        m_expr.insert(m_expr.begin() + m_expr_index, "100");
+        ++m_expr_index;
+        m_expr.insert(m_expr.begin() + m_expr_index, "*");
+        ++m_expr_index;
+    }
+
+    else if (str == "()")
+    {
+        m_expr.insert(m_expr.begin() + m_expr_index, "(");
+        ++m_expr_index;
+        m_expr.insert(m_expr.begin() + m_expr_index, ")");
+        --m_display_index;
+    }
+
+    m_display->setText(tmp);
+}
+
+bool MainWindow::isOperator(const QString& str)
+{
+    return str == "+" || str == "-" || str == "*" || str == "/";
+}
+
+bool MainWindow::lastIsNumber()
+{
+    if (m_expr.empty())
+    {
+        return false;
+    }
+
+    return ('0' <= m_expr[m_expr_index - 1][0] && m_expr[m_expr_index - 1][0] <= '9') ||
+            (m_expr[m_expr_index - 1].size() > 1 && m_expr[m_expr_index - 1][0] == '-' &&
+            '0' <= m_expr[m_expr_index - 1][1] && m_expr[m_expr_index - 1][1] <= '9');
+}
+
+bool MainWindow::lastIsOperator()
+{
+    if (m_expr.empty())
+    {
+        return false;
+    }
+
+    return isOperator(m_expr[m_expr_index - 1]);
+}
+
+bool MainWindow::checkPoint()
+{
+    QString str = m_expr[m_expr_index - 1];
+    for (QChar ch : str)
+    {
+        if (ch == '.')
+        {
+            return false;
+        }
+    }
+
+    return true;
 }
