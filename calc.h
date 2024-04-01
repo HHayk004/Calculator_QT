@@ -1,3 +1,25 @@
+#ifndef CALC_H
+#define CALC_H
+
+#include <vector>
+#include <string>
+#include <unordered_map>
+
+class ExprSolver
+{
+private:
+    std::unordered_map<QString, int> m_op_presedence = {{"+", 0}, {"-", 0}, {"*", 1}, {"/", 1}, {"%", 1}, {"(", 2}};
+
+private:
+    void makeCalc(std::vector<QString>& expr, std::vector<QString>::iterator it);
+
+    std::vector<QString>::iterator firstOperatorIndex(std::vector<QString>& expr);
+    bool isOperator(const QString& op) const;
+
+public:
+    void exprSolver(std::vector<QString>& expr);
+};
+
 void ExprSolver::exprSolver(std::vector<QString>& expr)
 {
     while (expr.size() != 1)
@@ -58,7 +80,19 @@ void ExprSolver::makeCalc(std::vector<QString>& expr, std::vector<QString>::iter
                 break;
         }
 
-        *(it - 1) = QString::fromStdString(std::to_string(result));
+        QString str = QString::fromStdString(std::to_string(result));
+
+        while (str[str.size() - 1] == '0')
+        {
+            str.chop(1);
+        }
+
+        if (str[str.size() - 1] == '.')
+        {
+            str.chop(1);
+        }
+
+        *(it - 1) = str;
         expr.erase(it, it + 2);
     }
 }
@@ -92,3 +126,5 @@ bool ExprSolver::isOperator(const QString& op) const
 
     return true;
 }
+
+#endif

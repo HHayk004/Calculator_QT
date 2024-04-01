@@ -81,6 +81,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     for (int i = 0; i < 4; ++i) // +, -, *, /
     {
+        m_buttons[i + 1][3]->setStyleSheet("background-color: #212121;");
         connect(m_buttons[i + 1][3], &QPushButton::clicked, [i, this]()
         {
             if ((m_buttons[i + 1][3]->text() == "-" && m_expr.empty() || m_expr[m_expr_index - 1] == "(") ||
@@ -91,6 +92,7 @@ MainWindow::MainWindow(QWidget *parent)
         });
     }
 
+    m_buttons[0][0]->setStyleSheet("background-color: #212121;");
     connect(m_buttons[0][0], &QPushButton::clicked, [this] { // for (
         if (m_expr.empty() || lastIsOperator())
         {
@@ -98,6 +100,7 @@ MainWindow::MainWindow(QWidget *parent)
         }
     });
 
+    m_buttons[0][1]->setStyleSheet("background-color: #212121;");
     connect(m_buttons[0][1], &QPushButton::clicked, [this] { // for )
         if ((lastIsNumber() || m_expr[m_expr_index - 1] == ")") && m_expr[m_expr_index] == ")")
         {
@@ -105,6 +108,7 @@ MainWindow::MainWindow(QWidget *parent)
         }
     });
 
+    m_buttons[0][2]->setStyleSheet("background-color: #212121;");
     connect(m_buttons[0][2], &QPushButton::clicked, [this] { // for %
         if (lastIsNumber())
         {
@@ -112,6 +116,7 @@ MainWindow::MainWindow(QWidget *parent)
         }
     });
 
+    m_buttons[0][3]->setStyleSheet("background-color: #212121;");
     connect(m_buttons[0][3], &QPushButton::clicked, [this] { // for CE
         QString str = m_display->text();
         if (!str.isEmpty())
